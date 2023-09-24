@@ -8,7 +8,7 @@ const {
   setIntervalAsync,
   clearIntervalAsync,
 } = require("set-interval-async/dynamic");
-const { spawn } = require("child_process");
+const { spawn, exec } = require("child_process");
 const { readFile, unlink } = require("fs").promises;
 const path = require("path");
 const os = require("os");
@@ -284,6 +284,46 @@ app.post("/kiosk/:kiosk", (req, res) => {
 
   kioskMode = req.params.kiosk;
   launchChromium(currentUrl);
+  return res.status(200).send("ok");
+});
+
+// brightness get endpoint
+app.get("/brightness", async (req, res) => {
+  try {
+    const brightness = await readFile(
+      "/sys/class/backlight/intel_backlight/brightness"
+    );
+    return res.status(200).send(brightness.toString());
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send("Error occurred in brightness code.");
+  }
+});
+
+// brightness set endpoint
+app.post("/brightness/:brightness", async (req, res) => {
+  if (!req.params.brightness) {
+    return res.status(400).send("Bad Request");
+  }
+
+  if (0 > req.params.brightness || 7500 < req.params.brightness) {
+    return res.status(400).send("Bad Request");
+  }
+
+  try {
+    exec(
+      `echo ${req.params.brightness} | tee /sys/class/backlight/intel_backlight/brightness`
+    );
+  } catch (e) {
+    console.log(e);
+    return res
+      .status(500)
+      .send(
+        "Error occurred in brightness code." +
+          `echo ${req.params.brightness} | tee /sys/class/backlight/intel_backlight/brightness`
+      );
+  }
+
   return res.status(200).send("ok");
 });
 
