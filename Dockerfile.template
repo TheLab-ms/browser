@@ -45,6 +45,9 @@ COPY ./public-html /home/chromium
 RUN echo 'SUBSYSTEM=="vchiq",GROUP="video",MODE="0660"' > /etc/udev/rules.d/10-vchiq-permissions.rules
 RUN usermod -a -G audio,video,tty chromium
 
+# Add brightness control permissions
+RUN echo 'SUBSYSTEM=="backlight", RUN+="/bin/chmod 666 /sys/class/backlight/%k/brightness"' >> /etc/udev/rules.d/90-backlight.rules
+
 RUN ln -s /usr/bin/chromium /usr/bin/chromium-browser || true
 
 # Set up the audio block. This won't have any effect if the audio block is not being used.
